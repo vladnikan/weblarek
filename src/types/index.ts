@@ -4,7 +4,7 @@ export interface Product {
     description: string;
     category: string;
     image: string;
-    price: number;
+    price?: number;
     isAvailable: boolean;
 }
 
@@ -19,7 +19,7 @@ export interface EmailPhoneForm {
 }
 
 export interface CartItem {
-    id: string;
+    id: number;
     title: string;
     price: number;
     quantity: number;
@@ -36,12 +36,15 @@ export interface OrderData {
 // Модели
 export interface IProductModel {
     getAllItems(): Product[]; 
+    setProducts(products: Product[]): void;
+    getProductById(id: number): Product | null;
+    setCurrentProduct(id: number): void;
 }
 
 export interface ICartModel {
     getItems(): CartItem[]; 
     addItem(product: Product): void;
-    removeItem(id: string): void;
+    removeItem(id: number): void;
     removeAll(): void; 
     totalPrice(): number;
     totalCount(): number;
