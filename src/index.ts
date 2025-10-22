@@ -182,6 +182,8 @@ eventBroker.on('order:submit', () => {
             closePopup(modalContact);
             openPopup(modalSuccess);
             cartModel.removeAll();
+            orderModel.setContact({ email: '', phone: '' });
+            orderModel.setPayment({paymentMethod: '', address: ''})
         })
         .catch(error => {
             console.error('Ошибка при оформлении', error);
