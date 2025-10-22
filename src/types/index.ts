@@ -4,13 +4,14 @@ export interface Product {
     description: string;
     category: string;
     image: string;
-    price?: number;
+    price?: number | string;
     isAvailable: boolean;
 }
 
+//обновим пейментМетод, чтоб был тип, когда он не выбран и поменяем later на кэш
 export interface PaymentAddressForm {
     address: string;
-    paymentMethod: 'online' | 'later';
+    paymentMethod: 'online' | 'cash' | '';
 }
 
 export interface EmailPhoneForm {
@@ -18,12 +19,21 @@ export interface EmailPhoneForm {
     phone: string;
 }
 
+//добавим локальный индекс для отрисовки номера в корзине
 export interface CartItem {
     id: number;
     title: string;
     price: number;
     quantity: number;
+    total?: number;
+    cartId: number;
+}
+
+//новый интерфейс для корзины
+export interface Cart {
+    items: CartItem[];
     total: number;
+    totalCount: number;
 }
 
 export interface OrderData {
