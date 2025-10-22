@@ -32,8 +32,6 @@ export class ProductView extends View<Product> {
             cardPrice.textContent = product.price?.toString() + ' синапсов';
         }
 
-        this.container.appendChild(cardElement);
-
-        return this.container;
+        return cardElement;
     }
 }
