@@ -31,9 +31,9 @@ export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
             btn.addEventListener('click', (evt) => {
                 evt.preventDefault();
                 // Устанавливаем класс selected
-                paymentChoice.online.classList.remove('selected');
-                paymentChoice.later.classList.remove('selected');
-                btn.classList.add('selected');
+                paymentChoice.online.style.border = '';
+                paymentChoice.later.style.border = '';
+                btn.style.border = '2px solid white';
                 this.events.emit('order:paymentSelected', { paymentMethod: method as 'online' | 'cash' });
             });
         });
