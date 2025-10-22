@@ -15,42 +15,15 @@ export class OrderModel implements IOrderModel {
     }
 
     setPayment(data: PaymentAddressForm): void {
-        const orderForm = document.querySelector('form[name="order"]') as HTMLFormElement | null;
-
-        const onlineButton = orderForm.querySelector('button[name="card"]') as HTMLButtonElement | null;
-        const laterButton = orderForm.querySelector('button[name="cash"]') as HTMLButtonElement | null;
-
-        if (onlineButton && laterButton) {
-            const selectedPayment = (selected: HTMLButtonElement, other: HTMLButtonElement) => {
-            onlineButton.classList.remove('selected');
-            laterButton.classList.remove('selected');
-
-            selected.classList.add('selected');
-
-            this.order.payment.paymentMethod = selected.name as 'online' | 'cash';
-
-            this.eventBroker.emit('order:paymentSelected', {paymentMethod: selected.name})
-            };
-
-            onlineButton.addEventListener('click', (evt) => {
-                evt.preventDefault();
-                selectedPayment(onlineButton, laterButton);
-                this.notifyUpdate();
-            });
-
-            laterButton.addEventListener('click', (evt) => {
-                evt.preventDefault();
-                selectedPayment(laterButton, onlineButton);
-                this.notifyUpdate();
-            })
-        }
-        else {
-            console.log('проблема с выбором оплаты')
-        }
+        this.order.payment = data;
+        this.validateAddress();
+        this.notifyUpdate();
     }
 
     setContact(data: EmailPhoneForm): void {
-        
+        this.order.contact = data;
+        this.validateContact();
+        this.notifyUpdate();
     }
 
     validateAddress(): boolean {
@@ -90,8 +63,7 @@ export class OrderModel implements IOrderModel {
         return regExp.test(email);
     }
 
-
     private notifyUpdate(): void {
-        this.eventBroker.trigger('update in ORDER MODEL', this.order)
+        this.eventBroker.emit('update in ORDER MODEL', this.order)
     }
 }

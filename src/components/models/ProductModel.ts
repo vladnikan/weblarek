@@ -31,7 +31,7 @@ export class ProductModel implements IProductModel {
     }
 
     setCurrentProduct(id: number): void {
-        
+        const product = this.getProductById(id);
     }
 
     //новый метод
