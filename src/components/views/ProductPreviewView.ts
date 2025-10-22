@@ -42,6 +42,8 @@ export class ProductPreviewView extends View<Product> {
         }
 
 
+
+
         modalContent.innerHTML = '';
 
         modalContent.appendChild(cardElement);
