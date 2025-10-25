@@ -1,37 +1,59 @@
-import { View } from "./View";
-import { Product } from "../../types";
-import { EventEmitter } from "../base/events";
-import { openPopup } from "../base/Modal";
+import { ProductCardBase } from './ProductCardBase';
+import { Product } from '../../types';
+import { EventEmitter } from '../base/events';
+import { ensureElement } from '../../utils/utils';
 
-export class ProductView extends View<Product> {
-    private events: EventEmitter;
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container);
-        this.events = events;
-    }
-    render(product: Product): HTMLElement {
-        const cardTemplate = (document.querySelector("#card-catalog") as HTMLTemplateElement).content;
+export class ProductView extends ProductCardBase {
+	private cardImage: HTMLImageElement;
+	private cardCategory: HTMLElement;
 
-        const cardElement = (cardTemplate.querySelector('.gallery__item').cloneNode(true)) as HTMLElement;
+	constructor(container: HTMLElement, events: EventEmitter) {
+		super(container, events);
+		this.cardImage = ensureElement<HTMLImageElement>(
+			'.card__image',
+			this.container
+		);
+		this.cardCategory = ensureElement<HTMLElement>(
+			'.card__category',
+			this.container
+		);
+	}
 
-        const cardImage = cardElement.querySelector('.card__image') as HTMLImageElement;
-        const cardCategory = cardElement.querySelector('.card__category') as HTMLElement;
-        const cardTitle = cardElement.querySelector('.card__title') as HTMLElement;
-        const cardPrice = cardElement.querySelector('.card__price') as HTMLElement;
+	render(product: Product): HTMLElement {
+		this.cardImage.src = product.image;
+		this.cardImage.alt = product.title;
 
-        cardImage.alt = product.title;
-        cardImage.src = product.image;
+		this.cardCategory.textContent = product.category;
+		//по умолчанию каждой карточке дается стиль софт, поэтому первоначально удалим какой-либо класс стиля
+		this.cardCategory.classList.remove(
+			'card__category_soft',
+			'card__category_hard',
+			'card__category_other',
+			'card__category_additional',
+			'card__category_button'
+		);
+		switch (product.category) {
+			case 'софт-скил':
+				this.cardCategory.classList.add('card__category_soft');
+				break;
+			case 'хард-скил':
+				this.cardCategory.classList.add('card__category_hard');
+				break;
+			case 'другое':
+				this.cardCategory.classList.add('card__category_other');
+				break;
+			case 'дополнительное':
+				this.cardCategory.classList.add('card__category_additional');
+				break;
+			case 'кнопка':
+				this.cardCategory.classList.add('card__category_button');
+				break;
+		}
 
-        cardCategory.textContent = product.category;
-        cardTitle.textContent = product.title;
-        if (!product.price) {
-            cardPrice.textContent = 'Бесценно'
-            
-        }
-        else {
-            cardPrice.textContent = product.price?.toString() + ' синапсов';
-        }
+		this.cardTitle.textContent = product.title;
+		this.cardPrice.textContent =
+			product.price != null ? `${product.price} синапсов` : 'Бесценно';
 
-        return cardElement;
-    }
+		return this.container;
+	}
 }

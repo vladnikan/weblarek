@@ -1,3 +1,4 @@
+export { HeaderView } from "./HeaderView";
 export { ProductPreviewView } from "./ProductPreviewView";
 export { OrderEmailAndPhoneView } from "./OrderEmailAndPhoneView";
 export { CartProductView } from "./CartProductView";

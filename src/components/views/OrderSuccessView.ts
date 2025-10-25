@@ -1,26 +1,37 @@
-import { View } from "./View";
-import { OrderData, Cart } from "../../types";
-import { EventEmitter } from "../base/events";
+import { View } from './View';
+import { Cart } from '../../types';
+import { EventEmitter } from '../base/events';
+import { ensureElement } from '../../utils/utils';
 
 export class OrderSuccessView extends View<Cart> {
-    events: EventEmitter;
+	private events: EventEmitter;
+	private description: HTMLElement;
+	private button: HTMLButtonElement;
 
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container);
-        this.events = events;
-    }
+	constructor(container: HTMLElement, events: EventEmitter) {
+		super(container);
+		this.events = events;
 
-    render(data?: Cart): HTMLElement {
-        const orderSuccessTemplate = (document.querySelector('#success') as HTMLTemplateElement).content;
-        const orderSuccessElement = (orderSuccessTemplate.querySelector('.order-success').cloneNode(true)) as HTMLElement;
-        const order_description = orderSuccessElement.querySelector('.order-success__description') as HTMLElement;
+		this.description = ensureElement<HTMLElement>(
+			'.order-success__description',
+			this.container
+		);
+		this.button = ensureElement<HTMLButtonElement>(
+			'.order-success__close',
+			this.container
+		);
 
-        order_description.innerHTML = `Списано ${data.total} синапсов`;
+		this.button.addEventListener('click', () => {
+			this.events.emit('order:closeSuccess');
+		});
+	}
 
-        this.container.innerHTML = '';
-        this.container.appendChild(orderSuccessElement);
+	render(data?: Cart): HTMLElement {
+		if (data) {
+			this.description.textContent = `Списано ${data.total} синапсов`;
+		}
 
-        console.log('успешна оплата отрисована')
-        return this.container;
-    }
+		console.log('Успешная оплата отрисована');
+		return this.container;
+	}
 }

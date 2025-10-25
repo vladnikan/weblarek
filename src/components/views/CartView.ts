@@ -1,57 +1,72 @@
-import { View } from "./View";
-import { CartItem, Cart } from "../../types";
-import { CartProductView } from "./CartProductView";
-import { EventEmitter } from "../base/events";
+import { View } from './View';
+import { Cart } from '../../types';
+import { CartProductView } from './CartProductView';
+import { EventEmitter } from '../base/events';
+import { ensureElement } from '../../utils/utils';
 
 export class CartView extends View<Cart> {
+	events: EventEmitter;
+	private total: HTMLSpanElement;
+	private list: HTMLUListElement;
+	private button: HTMLButtonElement;
+	private cartItemTemplate: HTMLTemplateElement;
 
-    events: EventEmitter;
+	constructor(
+		container: HTMLElement,
+		events: EventEmitter,
+		cartItemTemplate: HTMLTemplateElement
+	) {
+		super(container);
+		this.events = events;
+		this.cartItemTemplate = cartItemTemplate;
 
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container);
-        this.events = events;
-    }
+		this.total = ensureElement<HTMLSpanElement>(
+			'.basket__price',
+			this.container
+		);
+		this.list = ensureElement<HTMLUListElement>(
+			'.basket__list',
+			this.container
+		);
+		this.button = ensureElement<HTMLButtonElement>('.button', this.container);
 
-    render(cart: Cart): HTMLElement {
+		this.button.addEventListener('click', () => {
+			console.log('кнопка корзины нажата');
+			this.events.emit('cart:buy');
+		});
+	}
 
-        const cartTemplate = (document.querySelector('#basket') as HTMLTemplateElement).content;
-        const cartItems = cartTemplate.querySelector('.basket').cloneNode(true) as HTMLElement;
-        const cartTotal = cartItems.querySelector('.basket__price') as HTMLSpanElement ;
-        const cartList = cartItems.querySelector('.basket__list') as HTMLUListElement;
-        const buyButton = cartItems.querySelector('.basket__button') as HTMLButtonElement;
+	render(cart: Cart): HTMLElement {
+		this.list.replaceChildren();
+		this.list.style.listStyle = 'none';
 
-        const modalContent = document.querySelector('.modal__content:has(.basket)') as HTMLElement;
+		//прокрутка
+		this.list.style.maxHeight = '600px';
+		this.list.style.overflowY = 'auto';
 
-        const topButtonCounter = document.querySelector('.header__basket-counter') as HTMLSpanElement;
+		if (!cart.items.length) {
+			const empty = document.createElement('p');
+			empty.style.opacity = '0.3';
+			empty.textContent = 'Корзина пуста';
+			this.list.appendChild(empty);
+			this.button.disabled = true;
+		} else {
+			cart.items.forEach((cartItem, index) => {
+				const itemView = new CartProductView(
+					this.cartItemTemplate,
+					this.events,
+					index
+				);
+				this.list.appendChild(itemView.render(cartItem));
+			});
+			this.button.disabled = false;
+		}
 
-        
-        cartList.innerHTML = '';
-        cartList.style.listStyle = 'none';
+		this.total.textContent = cart.total
+			? `${cart.total} синапсов`
+			: `0 синапсов`;
 
-        if(!cart.items.length) {
-            const empty = document.createElement('p');
-            empty.style.opacity = '0.3';
-            empty.textContent = 'Корзина пуста';
-            cartList.appendChild(empty);
-            buyButton.disabled = true;
-        }
-        else {
-            cart.items.forEach(cartItem => {
-                const li = document.createElement('li');
-                const itemView = new CartProductView(li, this.events);
-                cartList.appendChild(itemView.render(cartItem));
-            })
-        }
-
-        topButtonCounter.textContent = cart.items.length.toString();
-
-        cartTotal.textContent = `${cart.total} синапсов`;
-
-        modalContent.innerHTML = '';
-
-        modalContent.appendChild(cartItems);
-
-        console.log('корзина отрисована');
-        return this.container;
-    }
+		console.log('корзина отрисована');
+		return this.container;
+	}
 }

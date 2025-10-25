@@ -1,77 +1,59 @@
-import { CartItem, ICartModel, Product } from "../../types";
-import { EventEmitter } from "../base/events";
-
-//HTMLULList element тип для списка
+import { ICartModel, Product } from '../../types';
+import { EventEmitter } from '../base/events';
 
 export class CartModel implements ICartModel {
-    private cartItems: CartItem[];
-    private eventBroker: EventEmitter;
+	private cartItems: Product[];
+	private eventBroker: EventEmitter;
 
-    private nextId: number = 1;
+	constructor(eventBroker: EventEmitter, cartItems: Product[] = []) {
+		this.eventBroker = eventBroker;
+		this.cartItems = cartItems;
+	}
 
+	getItems(): Product[] {
+		return this.cartItems;
+	}
 
-    constructor(eventBroker: EventEmitter, cartItems: CartItem[] = []) {
-        this.eventBroker = eventBroker;
-        this.cartItems = cartItems;
-    }
+	getItemIndexById(productId: string): number {
+		return this.cartItems.findIndex((item) => item.id === productId);
+	}
 
-    getItems(): CartItem[] {
-        return this.cartItems;
-    }
+	addItem(product: Product): void {
+		const cartItem: Product = {
+			...product,
+			price: Number(product.price) || 0,
+		};
+		this.cartItems.push(cartItem);
+		this.notifyUpdate();
+	}
 
-    addItem(product: Product): void {
-        const cartItem: CartItem = {
-            ...product,
-            price: Number(product.price) || 0,
-            quantity: 1,
-            cartId: this.nextId
-        };
-        this.cartItems.push(cartItem);
-        this.nextId++;
-        this.notifyUpdate();
-    }
+	removeItem(index: number): void {
+		if (index >= 0 && index < this.cartItems.length) {
+			this.cartItems.splice(index, 1);
+			this.notifyUpdate();
+		}
+	}
 
-    removeItem(cartId: number): void {
-        this.cartItems = this.cartItems.filter(item => item.cartId !== cartId);
+	removeAll(): void {
+		this.cartItems = [];
+		this.notifyUpdate();
+	}
 
-        this.cartItems.forEach((item, index) => {
-            item.cartId = index + 1;
-        })
+	totalCount(): number {
+		const total: number = this.cartItems.length;
+		return total;
+	}
 
-        this.nextId = this.cartItems.length +1;
-        
-        this.notifyUpdate();
-    }
+	totalPrice(): number {
+		let sum: number = this.cartItems.reduce((a, b) => a + Number(b.price), 0);
+		return sum;
+	}
 
-    removeAll(): void {
-        this.cartItems = [];
-
-        this.cartItems.forEach((item, index) => {
-            item.cartId = index + 1;
-        })
-
-        this.nextId = this.cartItems.length +1;
-        this.notifyUpdate();
-    }
-
-    totalCount(): number {
-        let total: number = this.cartItems.length;
-        return total;
-    }
-
-    totalPrice(): number {
-        let sum: number = 0;
-        for (let i: number = 0; i < this.cartItems.length; i++) {
-            sum += this.cartItems[i].price;
-        }
-        return sum;
-    }
-
-     //новый метод
-    private notifyUpdate(): void {
-        this.eventBroker.emit('cart:updated', {
-            items: this.cartItems,
-            total: this.totalPrice()
-        });
-    }
+	private notifyUpdate(): void {
+		this.eventBroker.emit('cart:updated', {
+			items: this.cartItems,
+			total: this.totalPrice(),
+			totalCount: this.totalCount(),
+		});
+	}
 }

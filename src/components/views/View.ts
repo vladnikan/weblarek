@@ -6,4 +6,8 @@ export abstract class View<T> {
     }
 
     abstract render(data?: T): HTMLElement;
+
+    getElement(): HTMLElement {
+        return this.container;
+    }
 }

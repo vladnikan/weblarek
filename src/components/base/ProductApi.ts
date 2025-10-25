@@ -7,6 +7,7 @@ export class ProductApi extends Api {
         const data = await this.get('/product/');
         console.log('данные получены')
         const response = data as ApiListResponse<Product>;
+        console.log(response.items)
         return response.items;
     }
 }

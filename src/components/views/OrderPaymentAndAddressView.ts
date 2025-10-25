@@ -1,80 +1,107 @@
-import { View } from "./View";
-import { PaymentAddressForm } from "../../types";
-import { EventEmitter } from "../base/events";
+import { View } from './View';
+import { PaymentAddressForm, OrderData } from '../../types';
+import { EventEmitter } from '../base/events';
+import { ensureElement } from '../../utils/utils';
 
 export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
-    events: EventEmitter;
+	private events: EventEmitter;
+	private address: HTMLInputElement;
+	private button: HTMLButtonElement;
+	private orderError: HTMLSpanElement;
+	private paymentOnline: HTMLButtonElement;
+	private paymentLater: HTMLButtonElement;
 
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container);
-        this.events = events;
-    }
+	constructor(container: HTMLElement, events: EventEmitter) {
+		super(container);
+		this.events = events;
 
-    render(data?: PaymentAddressForm): HTMLElement {
-        const orderPaymentAddressTemplate = (document.querySelector('#order') as HTMLTemplateElement).content;
-        const orderPaymentAddressElement = (orderPaymentAddressTemplate.querySelector('form[name="order"]').cloneNode(true)) as HTMLFormElement;
-        const button = orderPaymentAddressElement.querySelector('.modal__actions .button') as HTMLButtonElement;
-        const orderError = orderPaymentAddressElement.querySelector('.form__errors') as HTMLSpanElement;
-        const paymentChoice = {
-            online: orderPaymentAddressElement.querySelector('button[name="card"]') as HTMLButtonElement,
-            later: orderPaymentAddressElement.querySelector('button[name="cash"]') as HTMLButtonElement
-        };
+		// элементы внутри контейнера
+		this.address = ensureElement<HTMLInputElement>(
+			'input[name="address"]',
+			this.container
+		);
+		this.button = ensureElement<HTMLButtonElement>(
+			'.modal__actions .button',
+			this.container
+		);
+		this.orderError = ensureElement<HTMLSpanElement>(
+			'.form__errors',
+			this.container
+		);
+		this.paymentOnline = ensureElement<HTMLButtonElement>(
+			'button[name="card"]',
+			this.container
+		);
+		this.paymentLater = ensureElement<HTMLButtonElement>(
+			'button[name="cash"]',
+			this.container
+		);
 
-        // Проверка существования элементов
-        if (!paymentChoice.online || !paymentChoice.later || !button || !orderError) {
-            console.error('Не найдены элементы формы оплаты');
-            return this.container;
-        }
+		// обработчик клика на кнопки оплаты
+		[this.paymentOnline, this.paymentLater].forEach((button) => {
+			button.addEventListener('click', (evt) => {
+				evt.preventDefault();
+				const paymentMethod: 'online' | 'cash' =
+					button.name === 'card' ? 'online' : 'cash';
+				this.events.emit('order:paymentSelected', {
+					paymentMethod,
+					address: this.address.value,
+				});
+			});
+		});
 
-        // Обработка кликов по кнопкам выбора метода оплаты
-        Object.entries(paymentChoice).forEach(([method, btn]) => {
-            btn.addEventListener('click', (evt) => {
-                evt.preventDefault();
-                // Устанавливаем класс selected
-                paymentChoice.online.style.border = '';
-                paymentChoice.later.style.border = '';
-                btn.style.border = '2px solid white';
-                this.events.emit('order:paymentSelected', { paymentMethod: method as 'online' | 'cash' });
-            });
-        });
+		// Обработчик ввода адреса
+		this.address.addEventListener('input', () => {
+			const currentPaymentMethod = this.paymentOnline.classList.contains(
+				'button_alt-active'
+			)
+				? 'online'
+				: this.paymentLater.classList.contains('button_alt-active')
+				? 'cash'
+				: '';
+			this.events.emit('order:setPayment', {
+				paymentMethod: currentPaymentMethod,
+				address: this.address.value,
+			});
+		});
 
-        // Восстановление выбранного метода оплаты (если есть)
-        if (data?.paymentMethod === 'online') {
-            paymentChoice.online.classList.add('selected');
-        } else if (data?.paymentMethod === 'cash') {
-            paymentChoice.later.classList.add('selected');
-        }
+		// Обработка клика кнопки далее
+		this.button.addEventListener('click', (evt) => {
+			evt.preventDefault();
+			this.events.emit('order:nextStep');
+		});
 
-        // Обработка клика по кнопке "Далее"
-        button.addEventListener('click', (evt) => {
-            evt.preventDefault();
-            this.events.emit('order:nextStep');
-        });
+		// обновление валидации
+		this.events.on(
+			'order:renderPaymentValidation',
+			(data: { isValid: boolean; message?: string }) => {
+				this.renderValidation(data.isValid, data.message);
+			}
+		);
 
-        // Обработка валидации
-        this.events.on('order:validatePayment', (data: { isValid: boolean, message?: string }) => {
-            button.disabled = !data.isValid;
-            orderError.textContent = data.message || '';
-        });
+		// Обновление формы при изменении модели
+		this.events.on('order:update', (order: OrderData) => {
+			this.render(order.payment);
+		});
+	}
 
-        // Обработка ввода адреса
-        const address = orderPaymentAddressElement.querySelector('input[name="address"]') as HTMLInputElement;
-        if (!address) {
-            console.error('Не найден input для адреса');
-            return this.container;
-        }
-        address.addEventListener('input', (evt) => {
-            const input = evt.target as HTMLInputElement;
-            this.events.emit('order:addressInput', { address: input.value });
-        });
+	render(data?: PaymentAddressForm): HTMLElement {
+		if (data) {
+			this.address.value = data.address || '';
+			this.paymentLater.classList.remove('button_alt-active');
+			this.paymentOnline.classList.remove('button_alt-active');
+			if (data.paymentMethod === 'online') {
+				this.paymentOnline.classList.add('button_alt-active');
+			} else if (data.paymentMethod === 'cash') {
+				this.paymentLater.classList.add('button_alt-active');
+			}
+		}
+		return this.container;
+	}
 
-        // Установка начального значения адреса
-        address.value = data?.address || '';
-
-        console.log('оплата и адрес отрисованы');
-
-        this.container.innerHTML = '';
-        this.container.appendChild(orderPaymentAddressElement);
-        return this.container;
-    }
+	//метод для изменения состояния кнопки и вывода "введите способ оплаты" или "введите адрес"
+	renderValidation(isValid: boolean, message?: string) {
+		this.button.disabled = !isValid;
+		this.orderError.textContent = message || '';
+	}
 }

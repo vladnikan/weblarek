@@ -1,14 +1,12 @@
 export interface Product {
-    id: number;
+    id: string;
     title: string;
     description: string;
     category: string;
     image: string;
-    price?: number | string;
-    isAvailable: boolean;
+    price: number | string;
 }
 
-//обновим пейментМетод, чтоб был тип, когда он не выбран и поменяем later на кэш
 export interface PaymentAddressForm {
     address: string;
     paymentMethod: 'online' | 'cash' | '';
@@ -19,26 +17,14 @@ export interface EmailPhoneForm {
     phone: string;
 }
 
-//добавим локальный индекс для отрисовки номера в корзине
-export interface CartItem {
-    id: number;
-    title: string;
-    price: number;
-    quantity: number;
-    total?: number;
-    cartId: number;
-}
-
 //новый интерфейс для корзины
 export interface Cart {
-    items: CartItem[];
+    items: Product[];
     total: number;
     totalCount: number;
 }
 
 export interface OrderData {
-    items: CartItem[];
-    total: number;
     payment: PaymentAddressForm;
     contact: EmailPhoneForm;
 }
@@ -47,12 +33,12 @@ export interface OrderData {
 export interface IProductModel {
     getAllItems(): Product[]; 
     setProducts(products: Product[]): void;
-    getProductById(id: number): Product | null;
-    setCurrentProduct(id: number): void;
+    getProductById(id: string): Product | null;
+    setCurrentProduct(id: string): void;
 }
 
 export interface ICartModel {
-    getItems(): CartItem[]; 
+    getItems(): Product[]; 
     addItem(product: Product): void;
     removeItem(id: number): void;
     removeAll(): void; 
