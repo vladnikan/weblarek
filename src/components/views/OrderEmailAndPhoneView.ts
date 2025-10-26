@@ -1,5 +1,5 @@
 import { View } from './View';
-import { EmailPhoneForm, OrderData } from '../../types';
+import { EmailPhoneForm } from '../../types';
 import { EventEmitter } from '../base/events';
 import { ensureElement } from '../../utils/utils';
 
@@ -14,7 +14,6 @@ export class OrderEmailAndPhoneView extends View<EmailPhoneForm> {
 		super(container);
 		this.events = events;
 
-		// элементы
 		this.email = ensureElement<HTMLInputElement>(
 			'input[name="email"]',
 			this.container
@@ -29,7 +28,6 @@ export class OrderEmailAndPhoneView extends View<EmailPhoneForm> {
 			this.container
 		);
 
-		// Слушатели ввода
 		[this.email, this.phone].forEach((input) => {
 			input.addEventListener('input', () => {
 				this.events.emit('order:contactInput', {
@@ -39,19 +37,12 @@ export class OrderEmailAndPhoneView extends View<EmailPhoneForm> {
 			});
 		});
 
-		// Слушатель кнопки сабмита
 		this.button.addEventListener('click', (evt) => {
 			evt.preventDefault();
 			this.events.emit('order:submit');
 		});
-
-		// Обновление при изменении модели
-		this.events.on('order:update', (order: OrderData) => {
-			this.render(order.contact);
-		});
 	}
 
-	// Рендер полей
 	render(data?: EmailPhoneForm): HTMLElement {
 		if (data) {
 			this.email.value = data.email || '';
@@ -60,14 +51,8 @@ export class OrderEmailAndPhoneView extends View<EmailPhoneForm> {
 		return this.container;
 	}
 
-	// Отображение ошибок
-	renderValidation(isValid: boolean, field?: 'email' | 'phone') {
+	renderValidation(isValid: boolean, message?: string) {
 		this.button.disabled = !isValid;
-		if (!isValid) {
-			this.error.textContent =
-				field === 'email' ? 'Не введен email' : 'Не введен телефон';
-		} else {
-			this.error.textContent = '';
-		}
+		this.error.textContent = message || '';
 	}
 }

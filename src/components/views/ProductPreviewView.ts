@@ -4,11 +4,10 @@ import { EventEmitter } from '../base/events';
 import { ensureElement } from '../../utils/utils';
 
 export class ProductPreviewView extends ProductCardBase {
-	private readonly cardImage: HTMLImageElement;
-	private readonly cardCategory: HTMLElement;
-	private readonly cardText: HTMLElement;
-	private readonly buyButton: HTMLButtonElement;
-	private product: Product | null = null;
+	private cardImage: HTMLImageElement;
+	private cardCategory: HTMLElement;
+	private cardText: HTMLElement;
+	private buyButton: HTMLButtonElement;
 
 	constructor(container: HTMLElement, events: EventEmitter) {
 		super(container, events);
@@ -27,58 +26,16 @@ export class ProductPreviewView extends ProductCardBase {
 		);
 
 		this.buyButton.addEventListener('click', () => {
-			if (!this.product) {
-				console.error('Продукт не установлен');
-				return;
-			}
-			console.log(
-				'Кнопка нажата для продукта:',
-				this.product.title,
-				'ID:',
-				this.product.id
-			);
-			this.events.emit('cart:checkItem', {
-				productId: this.product.id,
-				callback: (isInCart: boolean) => {
-					if (isInCart) {
-						this.events.emit('card:removeById', { productId: this.product.id });
-					} else {
-						this.events.emit('card:add', { productId: this.product.id });
-					}
-				},
-			});
-		});
-
-		// Подписка на событие cart:checked для обновления кнопки
-		this.events.on(
-			'cart:checked',
-			({ productId, isInCart }: { productId: string; isInCart: boolean }) => {
-				if (this.product && this.product.id === productId) {
-					console.log('Получено событие cart:checked:', {
-						productId,
-						isInCart,
-					});
-					this.updateButton(isInCart);
-				}
-			}
-		);
-
-		// Подписка на cart:updated для обновления кнопки после изменения корзины
-		this.events.on('cart:updated', () => {
-			if (this.product) {
-				this.events.emit('cart:checkItem', {
-					productId: this.product.id,
-					callback: (isInCart: boolean) => {
-						this.updateButton(isInCart);
-					},
-				});
-			}
+			this.events.emit('preview:buyButtonClicked');
 		});
 	}
 
-	updateButton(isInCart: boolean): void {
-		if (this.product && this.product.price != null) {
-			this.buyButton.textContent = isInCart ? 'Удалить из корзины' : 'Купить';
+	updateButton(isInCart: boolean, price: number | null): void {
+		console.log('товар', isInCart, price);
+		if (price !== null && price > 0) {
+			this.buyButton.textContent = isInCart
+				? 'Удалить из корзины'
+				: 'В корзину';
 			this.buyButton.disabled = false;
 		} else {
 			this.buyButton.textContent = 'Недоступно';
@@ -87,12 +44,10 @@ export class ProductPreviewView extends ProductCardBase {
 	}
 
 	render(product: Product): HTMLElement {
-		this.product = product;
 		this.cardImage.src = product.image;
 		this.cardImage.alt = product.title;
 
 		this.cardCategory.textContent = product.category;
-		//по умолчанию каждой карточке дается стиль "другое", поэтому первоначально удалим какой-либо класс стиля
 		this.cardCategory.classList.remove(
 			'card__category_soft',
 			'card__category_hard',
@@ -123,15 +78,11 @@ export class ProductPreviewView extends ProductCardBase {
 		this.cardPrice.textContent =
 			product.price != null ? `${product.price} синапсов` : 'Бесценно';
 
-		// Запрашиваем статус товара в корзине
-		this.events.emit('cart:checkItem', {
-			productId: product.id,
-			callback: (isInCart: boolean) => {
-				this.updateButton(isInCart);
-			},
-		});
+		this.cardTitle.textContent = product.title;
+		this.cardText.textContent = product.description;
+		this.cardPrice.textContent =
+			product.price != null ? `${product.price} синапсов` : 'Бесценно';
 
-		console.log('Превью продукта отрисовано:', product.title);
 		return this.container;
 	}
 }

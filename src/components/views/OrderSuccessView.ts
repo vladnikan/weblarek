@@ -3,15 +3,14 @@ import { Cart } from '../../types';
 import { EventEmitter } from '../base/events';
 import { ensureElement } from '../../utils/utils';
 
-export class OrderSuccessView extends View<Cart> {
-	private events: EventEmitter;
+export class OrderSuccessView extends View<{ total: number }> {
 	private description: HTMLElement;
 	private button: HTMLButtonElement;
+	private events: EventEmitter;
 
 	constructor(container: HTMLElement, events: EventEmitter) {
 		super(container);
 		this.events = events;
-
 		this.description = ensureElement<HTMLElement>(
 			'.order-success__description',
 			this.container
@@ -26,12 +25,10 @@ export class OrderSuccessView extends View<Cart> {
 		});
 	}
 
-	render(data?: Cart): HTMLElement {
+	render(data?: { total: number }): HTMLElement {
 		if (data) {
 			this.description.textContent = `Списано ${data.total} синапсов`;
 		}
-
-		console.log('Успешная оплата отрисована');
 		return this.container;
 	}
 }

@@ -1,24 +1,14 @@
-import { View } from './View';
+import { ProductCardBase } from './ProductCardBase';
 import { Product } from '../../types';
 import { EventEmitter } from '../base/events';
 import { ensureElement } from '../../utils/utils';
-import { ProductCardBase } from './ProductCardBase';
 
 export class CartProductView extends ProductCardBase {
 	private index: HTMLElement;
 	private deleteButton: HTMLButtonElement;
 
-	constructor(
-		private template: HTMLTemplateElement,
-		events: EventEmitter,
-		private itemIndex: number
-	) {
-		const element = template.content.firstElementChild!.cloneNode(
-			true
-		) as HTMLElement;
-		super(element, events);
-
-		this.events = events;
+	constructor(container: HTMLElement, events: EventEmitter) {
+		super(container, events);
 
 		this.index = ensureElement<HTMLElement>(
 			'.basket__item-index',
@@ -32,14 +22,16 @@ export class CartProductView extends ProductCardBase {
 		);
 
 		this.deleteButton.addEventListener('click', () => {
-			this.events.emit('cart:remove', { index: this.itemIndex });
+			this.events.emit('cart:remove', { id: this.container.dataset.id });
 		});
 	}
 
-	render(product: Product): HTMLElement {
-		this.index.textContent = String(this.itemIndex + 1);
+	render(product: Product, itemIndex?: number): HTMLElement {
+		this.container.dataset.id = product.id; // Временный dataset для удаления (не хранение состояния)
+		this.index.textContent = String(itemIndex + 1);
 		this.cardTitle.textContent = product.title;
-		this.cardPrice.textContent = `${product.price} синапсов`;
+		this.cardPrice.textContent =
+			product.price != null ? `${product.price} синапсов` : 'Бесценно';
 		return this.container;
 	}
 }

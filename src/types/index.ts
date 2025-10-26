@@ -40,7 +40,8 @@ export interface IProductModel {
 export interface ICartModel {
     getItems(): Product[]; 
     addItem(product: Product): void;
-    removeItem(id: number): void;
+    // removeItem(id: number): void;
+    removeItem(id: string): void;
     removeAll(): void; 
     totalPrice(): number;
     totalCount(): number;

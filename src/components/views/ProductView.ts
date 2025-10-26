@@ -17,14 +17,21 @@ export class ProductView extends ProductCardBase {
 			'.card__category',
 			this.container
 		);
+
+		this.container.addEventListener('click', (evt) => {
+			evt.preventDefault();
+			this.events.emit('preview:open', {
+				productId: this.container.dataset.id,
+			});
+		});
 	}
 
 	render(product: Product): HTMLElement {
+		this.container.dataset.id = product.id;
 		this.cardImage.src = product.image;
 		this.cardImage.alt = product.title;
 
 		this.cardCategory.textContent = product.category;
-		//по умолчанию каждой карточке дается стиль софт, поэтому первоначально удалим какой-либо класс стиля
 		this.cardCategory.classList.remove(
 			'card__category_soft',
 			'card__category_hard',

@@ -14,24 +14,21 @@ export class CartModel implements ICartModel {
 		return this.cartItems;
 	}
 
-	getItemIndexById(productId: string): number {
-		return this.cartItems.findIndex((item) => item.id === productId);
-	}
-
 	addItem(product: Product): void {
+		if (product.price == null) return; // проверка для бесценного мамкиного таймера
 		const cartItem: Product = {
 			...product,
 			price: Number(product.price) || 0,
 		};
-		this.cartItems.push(cartItem);
-		this.notifyUpdate();
-	}
-
-	removeItem(index: number): void {
-		if (index >= 0 && index < this.cartItems.length) {
-			this.cartItems.splice(index, 1);
+		if (!this.cartItems.some((item) => item.id === product.id)) {
+			this.cartItems.push(cartItem);
 			this.notifyUpdate();
 		}
+	}
+
+	removeItem(id: string): void {
+		this.cartItems = this.cartItems.filter((item) => item.id !== id);
+		this.notifyUpdate();
 	}
 
 	removeAll(): void {
@@ -40,13 +37,15 @@ export class CartModel implements ICartModel {
 	}
 
 	totalCount(): number {
-		const total: number = this.cartItems.length;
-		return total;
+		return this.cartItems.length;
 	}
 
 	totalPrice(): number {
-		let sum: number = this.cartItems.reduce((a, b) => a + Number(b.price), 0);
-		return sum;
+		return this.cartItems.reduce((a, b) => a + Number(b.price), 0);
+	}
+
+	checkItem(productId: string): boolean {
+		return this.cartItems.some((item) => item.id === productId);
 	}
 
 	private notifyUpdate(): void {

@@ -3,7 +3,6 @@ import {
 	IOrderModel,
 	OrderData,
 	PaymentAddressForm,
-	Product,
 } from '../../types';
 import { EventEmitter } from '../base/events';
 
@@ -11,36 +10,31 @@ export class OrderModel implements IOrderModel {
 	order: OrderData;
 	eventBroker: EventEmitter;
 
-	constructor(eventBroker: EventEmitter, order: OrderData) {
+	constructor(eventBroker: EventEmitter, order?: OrderData) {
 		this.eventBroker = eventBroker;
-		this.order = order;
+		this.order = order || {
+			payment: { paymentMethod: '', address: '' },
+			contact: { email: '', phone: '' },
+		};
 	}
 
 	getOrder(): OrderData {
 		return this.order;
 	}
 
-	getOrderData(cartItems: Product[], totalPrice: number) {
-		return {
-			payment: this.order.payment.paymentMethod,
-			address: this.order.payment.address,
-			email: this.order.contact.email,
-			phone: this.order.contact.phone,
-			total: totalPrice,
-			items: cartItems.map((index) => index.id),
+	setPayment(data: Partial<PaymentAddressForm>): void {
+		this.order.payment = {
+			paymentMethod: data.paymentMethod ?? this.order.payment.paymentMethod,
+			address: data.address ?? this.order.payment.address,
 		};
-	}
-
-	setPayment(data: PaymentAddressForm): void {
-		this.order.payment = data;
+		this.eventBroker.emit('order:paymentUpdated', this.order);
 		this.validateAddress();
-		this.notifyUpdate();
 	}
 
-	setContact(data: EmailPhoneForm): void {
-		this.order.contact = data;
+	setContact(data: Partial<EmailPhoneForm>): void {
+		this.order.contact = { ...this.order.contact, ...data };
+		this.eventBroker.emit('order:contactUpdated', this.order);
 		this.validateContact();
-		this.notifyUpdate();
 	}
 
 	validateAddress(): boolean {
@@ -62,23 +56,18 @@ export class OrderModel implements IOrderModel {
 
 	validateContact(): boolean {
 		const { contact } = this.order;
-		const { email, phone } = contact;
 		let isValid = true;
 		let message = '';
 
-		if (!email.trim()) {
+		if (!contact.email.trim()) {
 			isValid = false;
 			message = 'Введите email';
-		} else if (!phone.trim()) {
+		} else if (!contact.phone.trim()) {
 			isValid = false;
 			message = 'Введите телефон';
 		}
 
 		this.eventBroker.emit('order:validateContact', { isValid, message });
 		return isValid;
-	}
-
-	private notifyUpdate(): void {
-		this.eventBroker.emit('order:update', this.order);
 	}
 }

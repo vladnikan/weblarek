@@ -1,21 +1,20 @@
 import { View } from './View';
-import { PaymentAddressForm, OrderData } from '../../types';
+import { PaymentAddressForm } from '../../types';
 import { EventEmitter } from '../base/events';
 import { ensureElement } from '../../utils/utils';
 
 export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
-	private events: EventEmitter;
 	private address: HTMLInputElement;
 	private button: HTMLButtonElement;
 	private orderError: HTMLSpanElement;
 	private paymentOnline: HTMLButtonElement;
 	private paymentLater: HTMLButtonElement;
+	private events: EventEmitter;
 
 	constructor(container: HTMLElement, events: EventEmitter) {
 		super(container);
 		this.events = events;
 
-		// элементы внутри контейнера
 		this.address = ensureElement<HTMLInputElement>(
 			'input[name="address"]',
 			this.container
@@ -37,7 +36,7 @@ export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
 			this.container
 		);
 
-		// обработчик клика на кнопки оплаты
+		// Обработчик клика на кнопки оплаты
 		[this.paymentOnline, this.paymentLater].forEach((button) => {
 			button.addEventListener('click', (evt) => {
 				evt.preventDefault();
@@ -52,15 +51,7 @@ export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
 
 		// Обработчик ввода адреса
 		this.address.addEventListener('input', () => {
-			const currentPaymentMethod = this.paymentOnline.classList.contains(
-				'button_alt-active'
-			)
-				? 'online'
-				: this.paymentLater.classList.contains('button_alt-active')
-				? 'cash'
-				: '';
 			this.events.emit('order:setPayment', {
-				paymentMethod: currentPaymentMethod,
 				address: this.address.value,
 			});
 		});
@@ -69,19 +60,6 @@ export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
 		this.button.addEventListener('click', (evt) => {
 			evt.preventDefault();
 			this.events.emit('order:nextStep');
-		});
-
-		// обновление валидации
-		this.events.on(
-			'order:renderPaymentValidation',
-			(data: { isValid: boolean; message?: string }) => {
-				this.renderValidation(data.isValid, data.message);
-			}
-		);
-
-		// Обновление формы при изменении модели
-		this.events.on('order:update', (order: OrderData) => {
-			this.render(order.payment);
 		});
 	}
 
@@ -99,7 +77,6 @@ export class OrderPaymentAndAddressView extends View<PaymentAddressForm> {
 		return this.container;
 	}
 
-	//метод для изменения состояния кнопки и вывода "введите способ оплаты" или "введите адрес"
 	renderValidation(isValid: boolean, message?: string) {
 		this.button.disabled = !isValid;
 		this.orderError.textContent = message || '';

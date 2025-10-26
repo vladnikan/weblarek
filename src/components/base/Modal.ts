@@ -7,47 +7,44 @@ interface IModalData {
 }
 
 export class Modal extends Component<IModalData> {
-	protected _closeButton: HTMLButtonElement;
-	protected _content: HTMLElement;
+    protected _closeButton: HTMLButtonElement;
+    protected _content: HTMLElement;
 
-	constructor(container: HTMLElement, protected events: IEvents) {
-		super(container);
+    constructor(container: HTMLElement, protected events: IEvents) {
+        super(container);
+        this._closeButton = ensureElement<HTMLButtonElement>(
+            '.modal__close',
+            container
+        );
+        this._content = ensureElement<HTMLElement>('.modal__content', container);
 
-		this._closeButton = ensureElement<HTMLButtonElement>(
-			'.modal__close',
-			container
-		);
-		this._content = ensureElement<HTMLElement>('.modal__content', container);
+        this._closeButton.addEventListener('click', this.close.bind(this));
+        this.container.addEventListener('click', this.close.bind(this));
+        this._content.addEventListener('click', (event) => event.stopPropagation());
+    }
 
-		this._closeButton.addEventListener('click', this.close.bind(this));
-		this.container.addEventListener('click', this.close.bind(this));
-		this._content.addEventListener('click', (event) => event.stopPropagation());
-	}
+    set content(value: HTMLElement) {
+        this._content.replaceChildren(value);
+    }
 
-	set content(value: HTMLElement) {
-		this._content.replaceChildren(value);
-	}
+    get content(): HTMLElement {
+        return this._content;
+    }
 
-	open() {
-		this.container.classList.add('modal_active');
-		document
-			.querySelector('.page__wrapper')
-			.classList.add('page__wrapper_locked');
-		this.events.emit('modal:open');
-	}
+    open() {
+        this.container.classList.add('modal_active');
+        this.events.emit('modal:open'); 
+    }
 
-	close() {
-		this.container.classList.remove('modal_active');
-		document
-			.querySelector('.page__wrapper')
-			.classList.remove('page__wrapper_locked');
-		this.content = null;
-		this.events.emit('modal:close');
-	}
+    close() {
+        this.container.classList.remove('modal_active');
+        this.content = null;
+        this.events.emit('modal:close'); 
+    }
 
-	render(data: IModalData): HTMLElement {
-		super.render(data);
-		this.open();
-		return this.container;
-	}
+    render(data: IModalData): HTMLElement {
+        super.render(data);
+        this.open();
+        return this.container;
+    }
 }

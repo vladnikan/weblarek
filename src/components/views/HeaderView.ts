@@ -1,5 +1,6 @@
 import { View } from './View';
 import { EventEmitter } from '../base/events';
+import { ensureElement } from '../../utils/utils';
 
 export class HeaderView extends View<void> {
 	private button: HTMLButtonElement;
@@ -9,16 +10,15 @@ export class HeaderView extends View<void> {
 	constructor(container: HTMLElement, events: EventEmitter) {
 		super(container);
 		this.events = events;
+		this.button = ensureElement<HTMLButtonElement>(
+			'.header__basket',
+			this.container
+		);
+		this.counter = ensureElement<HTMLSpanElement>(
+			'.header__basket-counter',
+			this.container
+		);
 
-		// Ищем элементы шапки внутри контейнера
-		this.button = container.querySelector(
-			'.header__basket'
-		) as HTMLButtonElement;
-		this.counter = container.querySelector(
-			'.header__basket-counter'
-		) as HTMLSpanElement;
-
-		// Обработчик клика по кнопке корзины
 		this.button.addEventListener('click', () => {
 			this.events.emit('cart:open');
 		});

@@ -1,72 +1,53 @@
 import { View } from './View';
 import { Cart } from '../../types';
-import { CartProductView } from './CartProductView';
 import { EventEmitter } from '../base/events';
-import { ensureElement } from '../../utils/utils';
+import { ensureElement, createElement } from '../../utils/utils';
 
 export class CartView extends View<Cart> {
-	events: EventEmitter;
-	private total: HTMLSpanElement;
-	private list: HTMLUListElement;
-	private button: HTMLButtonElement;
-	private cartItemTemplate: HTMLTemplateElement;
+	private list: HTMLElement;
+	private totalPrice: HTMLElement;
+	private buyButton: HTMLButtonElement;
 
-	constructor(
-		container: HTMLElement,
-		events: EventEmitter,
-		cartItemTemplate: HTMLTemplateElement
-	) {
+	constructor(container: HTMLElement, events: EventEmitter) {
 		super(container);
-		this.events = events;
-		this.cartItemTemplate = cartItemTemplate;
-
-		this.total = ensureElement<HTMLSpanElement>(
+		this.list = ensureElement<HTMLElement>('.basket__list', this.container);
+		this.totalPrice = ensureElement<HTMLElement>(
 			'.basket__price',
 			this.container
 		);
-		this.list = ensureElement<HTMLUListElement>(
-			'.basket__list',
+		this.buyButton = ensureElement<HTMLButtonElement>(
+			'.basket__button',
 			this.container
 		);
-		this.button = ensureElement<HTMLButtonElement>('.button', this.container);
 
-		this.button.addEventListener('click', () => {
-			console.log('кнопка корзины нажата');
-			this.events.emit('cart:buy');
+		this.buyButton.addEventListener('click', () => {
+			events.emit('cart:buy');
 		});
 	}
 
-	render(cart: Cart): HTMLElement {
-		this.list.replaceChildren();
-		this.list.style.listStyle = 'none';
+	protected setDisabled(element: HTMLButtonElement, state: boolean) {
+		if (element) {
+			element.disabled = state;
+		}
+	}
 
-		//прокрутка
-		this.list.style.maxHeight = '600px';
-		this.list.style.overflowY = 'auto';
-
-		if (!cart.items.length) {
-			const empty = document.createElement('p');
-			empty.style.opacity = '0.3';
-			empty.textContent = 'Корзина пуста';
-			this.list.appendChild(empty);
-			this.button.disabled = true;
+	render(cartData: Cart, itemViews?: HTMLElement[]): HTMLElement {
+		if (cartData.items.length === 0) {
+			this.list.replaceChildren(
+				createElement<HTMLParagraphElement>('p', {
+					textContent: 'Корзина пуста',
+				})
+			);
+			this.totalPrice.textContent = '0 синапсов';
+			this.setDisabled(this.buyButton, true);
 		} else {
-			cart.items.forEach((cartItem, index) => {
-				const itemView = new CartProductView(
-					this.cartItemTemplate,
-					this.events,
-					index
-				);
-				this.list.appendChild(itemView.render(cartItem));
-			});
-			this.button.disabled = false;
+			this.list.replaceChildren(...(itemViews || []));
+			this.totalPrice.textContent = cartData.total
+				? `${cartData.total} синапсов`
+				: '0 синапсов';
+			this.setDisabled(this.buyButton, false);
 		}
 
-		this.total.textContent = cart.total
-			? `${cart.total} синапсов`
-			: `0 синапсов`;
-
-		console.log('корзина отрисована');
-		return this.container;
+		return this.getElement();
 	}
 }
